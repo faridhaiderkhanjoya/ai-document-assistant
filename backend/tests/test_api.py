@@ -1,5 +1,5 @@
 from unittest.mock import patch
-import os
+
 import pymupdf
 from fastapi.testclient import TestClient
 

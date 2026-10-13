@@ -29,6 +29,9 @@ jobs:
       - name: Check Python syntax
         run: python -m py_compile backend/main.py
 
+      - name: Run Ruff lint checks
+        run: ruff check backend/main.py backend/tests/test_api.py
+
       - name: Run API tests
         run: python -m pytest -v backend/tests/
 
