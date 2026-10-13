@@ -1,3 +1,4 @@
+import os
 import pymupdf
 from fastapi.testclient import TestClient
 
@@ -126,4 +127,24 @@ def test_upload_pdf_rejects_pdf_without_text():
     assert response.status_code == 422
     assert response.json() == {
         "detail": "No extractable text found. The PDF may be scanned."
+    }
+
+def test_ask_pdf_rejects_non_pdf_file(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+
+    response = client.post(
+        "/ask-pdf",
+        data={"question": "What is this document about?"},
+        files={
+            "file": (
+                "document.txt",
+                b"This is not a PDF file.",
+                "text/plain",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Please upload a PDF file"
     }
