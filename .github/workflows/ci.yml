@@ -32,6 +32,9 @@ jobs:
       - name: Run Ruff lint checks
         run: ruff check backend/main.py backend/tests/test_api.py
 
+      - name: Audit production dependencies
+        run: pip-audit -r backend/requirements.txt
+
       - name: Run API tests
         run: python -m pytest -v backend/tests/
 
