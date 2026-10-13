@@ -104,3 +104,26 @@ def test_upload_pdf_extracts_text():
     assert data["pages"] == 1
     assert data["characters_extracted"] > 0
     assert "Hello from automated testing" in data["text"]
+
+def test_upload_pdf_rejects_pdf_without_text():
+    document = pymupdf.open()
+    document.new_page()
+
+    pdf_bytes = document.tobytes()
+    document.close()
+
+    response = client.post(
+        "/upload-pdf",
+        files={
+            "file": (
+                "blank.pdf",
+                pdf_bytes,
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "No extractable text found. The PDF may be scanned."
+    }
