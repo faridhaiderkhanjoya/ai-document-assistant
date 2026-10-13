@@ -25,3 +25,20 @@ def test_ask_endpoint_missing_question():
     response = client.post("/ask", json={})
 
     assert response.status_code == 422
+
+def test_upload_pdf_rejects_non_pdf_file():
+    response = client.post(
+        "/upload-pdf",
+        files={
+            "file": (
+                "document.txt",
+                b"This is not a PDF file.",
+                "text/plain",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Please upload a PDF file"
+    }
