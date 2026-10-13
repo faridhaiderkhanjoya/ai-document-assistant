@@ -31,3 +31,6 @@ jobs:
 
       - name: Run API tests
         run: python -m pytest -v backend/tests/
+
+      - name: Build Docker image
+        run: docker build -t ai-document-assistant-api:ci ./backend
