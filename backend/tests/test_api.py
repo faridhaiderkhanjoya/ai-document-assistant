@@ -168,3 +168,29 @@ def test_ask_pdf_rejects_empty_file(monkeypatch):
     assert response.json() == {
         "detail": "The uploaded PDF is empty"
     }
+
+def test_ask_pdf_rejects_pdf_without_text(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+
+    document = pymupdf.open()
+    document.new_page()
+
+    pdf_bytes = document.tobytes()
+    document.close()
+
+    response = client.post(
+        "/ask-pdf",
+        data={"question": "What is in this document?"},
+        files={
+            "file": (
+                "blank.pdf",
+                pdf_bytes,
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "No extractable text found. The PDF may be scanned."
+    }
