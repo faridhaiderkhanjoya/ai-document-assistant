@@ -59,3 +59,20 @@ def test_upload_pdf_rejects_empty_file():
     assert response.json() == {
         "detail": "The uploaded PDF is empty"
     }
+
+def test_upload_pdf_rejects_corrupted_file():
+    response = client.post(
+        "/upload-pdf",
+        files={
+            "file": (
+                "corrupted.pdf",
+                b"This is not valid PDF content.",
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Could not process this PDF file"
+    }
