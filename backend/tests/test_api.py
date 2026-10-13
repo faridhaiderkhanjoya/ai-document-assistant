@@ -1,4 +1,4 @@
-
+import pymupdf
 from fastapi.testclient import TestClient
 
 from backend.main import app
@@ -76,3 +76,31 @@ def test_upload_pdf_rejects_corrupted_file():
     assert response.json() == {
         "detail": "Could not process this PDF file"
     }
+
+
+def test_upload_pdf_extracts_text():
+    document = pymupdf.open()
+    page = document.new_page()
+    page.insert_text((72, 72), "Hello from automated testing")
+
+    pdf_bytes = document.tobytes()
+    document.close()
+
+    response = client.post(
+        "/upload-pdf",
+        files={
+            "file": (
+                "sample.pdf",
+                pdf_bytes,
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["filename"] == "sample.pdf"
+    assert data["pages"] == 1
+    assert data["characters_extracted"] > 0
+    assert "Hello from automated testing" in data["text"]
