@@ -148,3 +148,23 @@ def test_ask_pdf_rejects_non_pdf_file(monkeypatch):
     assert response.json() == {
         "detail": "Please upload a PDF file"
     }
+
+def test_ask_pdf_rejects_empty_file(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+
+    response = client.post(
+        "/ask-pdf",
+        data={"question": "What is in this document?"},
+        files={
+            "file": (
+                "empty.pdf",
+                b"",
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "The uploaded PDF is empty"
+    }
