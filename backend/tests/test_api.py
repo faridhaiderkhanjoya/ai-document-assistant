@@ -20,3 +20,8 @@ def test_health_endpoint():
 
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
+
+def test_ask_endpoint_missing_question():
+    response = client.post("/ask", json={})
+
+    assert response.status_code == 422
