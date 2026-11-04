@@ -1,9 +1,11 @@
+
 import os
 
 import pymupdf
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from google import genai
+from google.genai import types
 from pydantic import BaseModel
 
 load_dotenv()
@@ -13,6 +15,22 @@ app = FastAPI(title="AI Document Assistant")
 
 class AskRequest(BaseModel):
     question: str
+
+
+def create_gemini_client(api_key: str) -> genai.Client:
+    """Create a Gemini client with bounded timeout and retry settings."""
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(
+            timeout=120_000,
+            retry_options=types.HttpRetryOptions(
+                attempts=2,
+                initial_delay=0.5,
+                max_delay=2.0,
+                http_status_codes=[408, 429, 500, 502, 503, 504],
+            ),
+        ),
+    )
 
 
 @app.get("/")
@@ -36,10 +54,10 @@ def ask_question(request: AskRequest):
         )
 
     try:
-        client = genai.Client(api_key=api_key)
+        client = create_gemini_client(api_key)
 
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-3.5-flash-lite",
             contents=request.question,
         )
 
@@ -56,6 +74,8 @@ def ask_question(request: AskRequest):
             status_code=502,
             detail="The AI provider request failed. Check server logs.",
         )
+
+
 @app.post("/upload-pdf")
 async def upload_pdf(file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
@@ -111,6 +131,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     finally:
         await file.close()
 
+
 @app.post("/ask-pdf")
 async def ask_pdf(
     question: str = Form(...),
@@ -153,10 +174,10 @@ async def ask_pdf(
                 detail="No extractable text found. The PDF may be scanned.",
             )
 
-        client = genai.Client(api_key=api_key)
+        client = create_gemini_client(api_key)
 
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-3.5-flash-lite",
             contents=(
                 "Answer the question using the provided document. "
                 "If the document does not contain the answer, say so. "
@@ -187,3 +208,4 @@ async def ask_pdf(
         )
     finally:
         await file.close()
+
